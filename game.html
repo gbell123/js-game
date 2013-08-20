@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html>
+  	<head>
+  		<link rel="stylesheet" type="text/css" href="game.css">
+  		<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js">
+		</script>
+		<script src="http://ajax.googleapis.com/ajax/libs/jqueryui/1.10.2/jquery-ui.min.js"></script>
+	</head>
+	<body>
+		<div class='level' id='level1'>
+			<span class='stats' id='lives'></span>
+
+			<span id='end'>Game Over</span>
+
+			<div class='sprite'></div>
+
+			<div id='grapplingHook'></div>
+
+			<div class='ledge' id='ledge1'>
+				<img src='grass1.png'/>
+				<img src='grass.png'/>
+				<img src='grass.png'/>
+				<img src='grass1.png'/>
+			</div>
+			<div class='ledge' id='ledge2'>
+				<img src='grass.png'/>
+				<img src='grass1.png'/>
+				<img src='grass.png'/>
+				<img src='grass1.png'/></div>
+			<div class='spikes'></div>
+
+			<div class='enemy' id='vertMover'></div>
+		</div>
+
+		<script type="text/javascript">
+			// Constants
+			var SPACE = 32,
+				LEFT = 37, 
+				UP = 38,
+				RIGHT = 39,
+				DOWN = 40;
+
+			function Player() {
+				this.html = $('.sprite');
+				this.xAccel = 15;
+				this.yVel = 0;
+				this.yAccel = 2;
+				this.status = 'falling';
+				this.on = 'nothing';
+				this.lives = 2;
+			}
+			Player.prototype.applyGravity = function() {
+				this.yVel += player.yAccel;
+			}
+			Player.prototype.moveHorizontally = function(oldVal) {
+				if (this.status !== 'jumping' &&
+					this.status !== 'falling') {
+					this.status = 'moving';
+				}
+				var newVal = parseInt(oldVal, 10)
+				- (level1.keysPressed[LEFT] ? this.xAccel : 0)
+				+ (level1.keysPressed[RIGHT] ? this.xAccel : 0);
+
+				newVal = (newVal < 0 ? 0 : newVal);
+				newVal = (newVal > level1.maxValue ? level1.maxValue : newVal);
+				return newVal;
+			}
+			Player.prototype.moveVertically = function(oldVal) {
+				// jump
+				if (level1.keysPressed[SPACE]) {
+					if (this.status === 'idle' || 
+						this.status === 'moving') {
+						this.status = 'jumping';
+						this.yVel = -35;
+					}
+				}
+
+				// set falling
+				if (this.yVel > 0) {
+					this.status = 'falling';
+				}
+
+				// boundary checks
+				// outer boundaries
+				var newVal = parseInt(oldVal) + player.yVel;
+				newVal = (newVal > level1.maxValue ? level1.maxValue : newVal);
+				newVal = (newVal < 0 ? 0 : newVal);
+				if (newVal === 0) {
+					player.yVel = 0;
+				} else if (newVal === level1.maxValue) {
+					this.on = 'ground';
+					this.status = 'idle';
+				}
+
+				// ledge checks
+				newVal = collisionCheck(this, ledge1, newVal);
+				newVal = collisionCheck(this, ledge2, newVal);
+
+				/*$('#grapplingHook').css({
+					top: newVal - 20,
+					left: sprite.position().left + player.html.width() - 7,
+				});*/
+
+				/*$('#grapplingHook').click(function() {
+					$('#grapplingHook').hide();
+					$('#grapplingHook').show("slide");
+				});*/
+				return newVal;
+			}
+			Player.prototype.decrementLives = function() {
+				player.lives -= 1;
+				$('#lives').text('Lives: ' + player.lives);
+			    this.html.css({
+		      		top: 0,
+					left: 500
+				});
+				player.yVel = 0;
+
+				if (player.lives == 0) {
+					clearInterval(refInt);
+					$('#end').show();
+					$('#lives').text('Lives: ' + player.lives);
+				}
+			}
+			var player = new Player();
+
+			// type = vertical, horizontal, etc
+			function Enemy(html, type, initialDirection) {
+				this.html = html;
+				this.type = type;
+				this.direction = initialDirection;
+			}
+			Enemy.prototype.toggleDirVert = function() {
+				dir = this.direction;
+				if (dir === 'up') {
+					this.direction = 'down';
+				} else {
+					this.direction = 'up';
+				}
+			}
+			Enemy.prototype.moveVertically = function() {
+				vtop = this.html.position().top;
+				if (vtop === 480 || vtop === 200) {
+					this.toggleDirVert();
+				}
+
+				dir = this.direction;
+				if (dir === 'up') {
+					vert.html.css({
+						top: vtop - 10
+					});
+				} else {
+					vert.html.css({
+						top: vtop + 10
+					});
+				}
+			}
+			Enemy.prototype.collisionCheck = function() {
+				var sprite = player.html;
+				var enemy = this.html;
+
+				var x1 = sprite.offset().left;
+			    var y1 = sprite.offset().top;
+			    var h1 = sprite.outerHeight(true);
+			    var w1 = sprite.outerWidth(true);
+			    var b1 = y1 + h1;
+			    var r1 = x1 + w1;
+			    var x2 = enemy.offset().left;
+			    var y2 = enemy.offset().top;
+			    var h2 = enemy.outerHeight(true);
+			    var w2 = enemy.outerWidth(true);
+			    var b2 = y2 + h2;
+			    var r2 = x2 + w2;
+
+			    if (!(b1 < y2 || y1 > b2 || r1 < x2 || x1 > r2)) {
+			      	player.decrementLives();
+				}
+			}
+			var vert = new Enemy($('#vertMover'), 'vertical', 'down');
+
+			function Level(html) {
+				this.html = html;
+				this.maxValue = this.html.height() - player.html.height();
+				this.keysPressed = {};
+			}
+			var level1 = new Level($('#level1'));
+
+			// grassloblal listeners
+			$(window).keydown(function(event) {
+				level1.keysPressed[event.which] = true;
+			});
+
+			$(window).keyup(function(event) {
+				level1.keysPressed[event.which] = false;
+			});
+
+			var ledge1 = $('#ledge1'),
+				ledge2 = $('#ledge2');				
+
+			$('#lives').text('Lives: ' + player.lives);
+			$('#end').hide();
+
+			function calcNewYVal(oldVal) {
+				
+			}
+
+			function collisionCheck(player, ledge, newVal) {
+				// TODO side checks -- not trivial (i think)
+				var sprite = player.html;
+
+				var x1 = sprite.offset().left;
+			    var y1 = sprite.offset().top;
+			    var h1 = sprite.outerHeight(true);
+			    var w1 = sprite.outerWidth(true);
+			    var b1 = y1 + h1;
+			    var r1 = x1 + w1;
+			    var x2 = ledge.offset().left;
+			    var y2 = ledge.offset().top;
+			    var h2 = ledge.outerHeight(true);
+			    var w2 = ledge.outerWidth(true);
+			    var b2 = y2 + h2;
+			    var r2 = x2 + w2;
+
+			    if (!(b1 < y2 || y1 > b2 || r1 < x2 || x1 > r2)) {
+			      	if (player.yVel > 0) {
+						newVal = ledge.position().top - sprite.width();
+						player.status = 'idle';
+						player.on = ledge.attr('id');
+						player.yVel = 0;
+					} else if ((player['yVel'] < 0) && 
+						(player.on !== ledge.attr('id'))) {
+						newVal = ledge.position().top + ledge.height() + 1;
+						player.yVel = 0;
+					}
+				}
+				return newVal;
+			}
+
+			// evaluate every 30 milliseconds
+			var refInt = setInterval(function() {
+				player.applyGravity();
+				vert.moveVertically();
+				player.html.css({
+					left: function(index, oldVal) {
+						return player.moveHorizontally(oldVal);
+					}, 
+
+					top: function(index, oldVal) {
+						return player.moveVertically(oldVal);
+					}
+				});
+				vert.collisionCheck();
+			}, 30);
+		</script>
+	</body>
+</html>

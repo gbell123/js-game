@@ -1,0 +1,77 @@
+.level {
+	position: relative;
+	width: 750px;
+	height: 750px;
+	border: 2px solid brown;
+}
+
+.sprite {
+	position: absolute;
+	top: 0px;
+	left: 500px;
+	width: 50px;
+	height: 50px;
+	background-color: blue;
+}
+
+#end {
+	position: absolute;
+	left: 100px;
+	color: red;
+	font-size: 40pt;
+}
+
+/*#grapplingHook {
+	padding: 0px; 
+	margin: 0px;
+	height: 5px;
+	background-color: black; 
+	line-height: 1px;
+	position: absolute; 
+	width: 800px;
+
+	-webkit-transform: rotate(-45deg);
+    -moz-transform: rotate(-45deg);
+    -o-transform: rotate(-45deg);
+    -ms-transform: rotate(-45deg);
+    transform: rotate(-45deg);
+}*/
+
+.spikes {
+	position: absolute;
+	top: 419px;
+}
+
+img {
+	float: left;
+	display: block;
+}
+
+.enemy {
+	position: absolute;
+	width: 20px;
+	height: 20px;
+	background-color: red;
+}
+
+#vertMover {
+	top: 300px;
+	left: 150px;
+}
+
+.ledge {
+	position: absolute;
+	width: 400px;
+	height: 100px;
+	background-color: green;
+}
+
+#ledge1 {
+	top: 650px;
+	left: 0px;
+}
+
+#ledge2 {
+	top: 400px; 
+	left: 350px;
+}
